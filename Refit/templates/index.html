@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Refit</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.png') }}">
+</head>
+<body>
+
+  <!-- 상단 네비게이션 바 -->
+  <header class="navbar">
+    <div class="navbar-container">
+      <img src="{{ url_for('static', filename='img/Refit_home.png') }}" alt="Refit 로고" class="logo" />
+      <nav class="nav-menu">
+        <a href="#home">홈</a>
+        <a href="#service">서비스 소개</a>
+        <a href="#pricing">가격</a>
+        <a href="#contact">문의</a>
+        <a href="/login" class="btn btn-login">로그인</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1>반복되는 고객문의, 이제는 Refit이 응답합니다.</h1>
+      <p>소상공인을 위한 AI 기반 고객 응답 자동화 서비스</p>
+      <a href="#service" class="btn">서비스 알아보기</a>
+    </div>
+  </section>
+</body>
+</html>
