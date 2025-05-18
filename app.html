@@ -1,0 +1,84 @@
+<!-- frontend/index.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>QA Interface</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; }
+    input, select, button { padding: 8px; margin-top: 5px; width: 100%; box-sizing: border-box; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+
+    function QAInterface() {
+      const [category, setCategory] = React.useState("payment");
+      const [question, setQuestion] = React.useState("");
+      const [answer, setAnswer] = React.useState("");
+      const [loading, setLoading] = React.useState(false);
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setAnswer("");
+        try {
+          const res = await fetch("http://127.0.0.1:5000/ask", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ category, question }),
+          });
+          const data = await res.json();
+          setAnswer(data.answer || "답변을 찾을 수 없습니다.");
+        } catch (err) {
+          setAnswer("오류가 발생했습니다.");
+          console.error(err);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      return (
+        <div>
+          <h1>고객 질문 자동 응답</h1>
+          <form onSubmit={handleSubmit}>
+            <label>카테고리</label>
+            <select value={category} onChange={e => setCategory(e.target.value)}>
+              <option value="payment">결제</option>
+              <option value="refund">환불</option>
+              <option value="delivery">배송</option>
+            </select>
+
+            <label>질문</label>
+            <input
+              type="text"
+              value={question}
+              onChange={e => setQuestion(e.target.value)}
+              placeholder="예: 다른 카드로 결제하고 싶어요"
+              required
+            />
+
+            <button type="submit" disabled={loading}>
+              {loading ? "처리 중..." : "질문하기"}
+            </button>
+          </form>
+
+          {answer && (
+            <div style={{ marginTop: 20, padding: 10, backgroundColor: "#eee" }}>
+              <h2>🔍 답변</h2>
+              <p>{answer}</p>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<QAInterface />);
+  </script>
+</body>
+</html>
