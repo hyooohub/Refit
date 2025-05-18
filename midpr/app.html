@@ -1,84 +1,218 @@
-<!-- frontend/index.html -->
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-  <meta charset="UTF-8" />
-  <title>QA Interface</title>
-  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
-  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; }
-    input, select, button { padding: 8px; margin-top: 5px; width: 100%; box-sizing: border-box; }
-  </style>
-</head>
-<body>
-  <div id="root"></div>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Refit AI</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="icon" href="./img/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/default.min.css"
+    />
+  </head>
+  <body>
+    <nav>
+      <ul style="font-size: 14px">
+        <li>
+          <a href="#">
+            <img src="./img/menu-new.png" style="width: 26px; height: 26px; margin: 0"/>
+          </a>
+          <a href="#">
+            <span>Refit</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+    <div id="main-content">
+      <div id="main-page">
+        <div id="main-text">
+          <img id="title-image" src="./img/logo.png" />
+          <h3 id="title">궁금한 것이 있으신가요?</h3>
+          <br>
+          <h3 id="title">아래의 버튼을 눌러 카테고리를 선택하세요!</h3>
+        </div>
+        <div id="title-sections">
+          <div id="categories">
+            <div class="section"><div class="section-title">결제</div></div>
+            <div class="section"><div class="section-title">환불</div></div>
+            <div class="section"><div class="section-title">배송</div></div>
+            <div class="section"><div class="section-title">기타</div></div>
+          </div>
+        </div>
+      </div>
+      <div id="chat-wrapper">
+        <div id="chat-container">
+        </div>
+      </div>
+    </div>
+    <form name="text_input">
+      <div id="chat-box">
+        <input type="text" placeholder="궁금한 것을 물어보세요!" class="chat-text" />
+        <div class="button">
+          <button id="chat-button"><img src="./img/button.png" /></button>
+        </div>
+      </div>
+      <div id="info-message">
+        2025 Refit - Mid Presentation
+      </div>
+    </form>
+    <script>
+      let selectedCategory = "payment";
+      document.querySelector('.section-title').classList.add('selected');
 
-  <script type="text/babel">
+      const chatButton = document.querySelector("#chat-button");
+      const chatText = document.querySelector("input.chat-text");
+      const mainPage = document.querySelector("#main-page");
+      const chatContainer = document.querySelector("#chat-container");
 
-    function QAInterface() {
-      const [category, setCategory] = React.useState("payment");
-      const [question, setQuestion] = React.useState("");
-      const [answer, setAnswer] = React.useState("");
-      const [loading, setLoading] = React.useState(false);
-
-      const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setAnswer("");
+      window.addEventListener('DOMContentLoaded', async () => {
         try {
-          const res = await fetch("http://127.0.0.1:5000/ask", {
+          const catResponse = await fetch('/categories');
+          const categories = await catResponse.json();
+          console.log('사용 가능한 카테고리:', categories);
+        } catch (error) {
+          console.error('카테고리 정보를 가져오는 중 오류 발생:', error);
+        }
+      });
+
+      function addMessage(sender, message) {
+        const messageElement = document.createElement("div");
+        const imgElement = document.createElement("img");
+        const nameElement = document.createElement("div");
+        const logElement = document.createElement("div");
+        if (sender === "user") {
+          messageElement.className = "chat my-chat";
+          imgElement.src = "./img/user.png";
+          nameElement.textContent = "You";
+        } else if (sender === "ai") {
+          messageElement.className = "chat gpt-chat";
+          imgElement.src = "./img/logo.png";
+          nameElement.textContent = "Refit";
+        }
+        imgElement.className = "profile";
+        nameElement.className = "chat-name";
+        logElement.className = "chat-log";
+        logElement.innerHTML = message;
+        messageElement.appendChild(imgElement);
+        messageElement.appendChild(nameElement);
+        messageElement.appendChild(logElement);
+        chatContainer.appendChild(messageElement);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+
+      function addTemporaryMessage() {
+        const tempMessageElement = document.createElement("div");
+        tempMessageElement.className = "chat gpt-chat";
+        const imgElement = document.createElement("img");
+        imgElement.src = "./img/logo.png";
+        imgElement.className = "profile";
+        const nameElement = document.createElement("div");
+        nameElement.textContent = "Refit";
+        nameElement.className = "chat-name";
+        const logElement = document.createElement("div");
+        logElement.className = "chat-log";
+        const spinnerElement = document.createElement("img");
+        spinnerElement.src = "./img/spinner.gif";
+        spinnerElement.className = "spinner";
+        logElement.appendChild(spinnerElement);
+        tempMessageElement.appendChild(imgElement);
+        tempMessageElement.appendChild(nameElement);
+        tempMessageElement.appendChild(logElement);
+        chatContainer.appendChild(tempMessageElement);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        return tempMessageElement;
+      }
+
+      chatText.addEventListener("input", () => {
+        if (chatText.value === "") {
+          chatButton.querySelector("img").src = "./img/button.png";
+          chatButton.style.pointerEvents = "none";
+          chatButton.style.userSelect = "none";
+          chatButton.disabled = true;
+        } else {
+          chatButton.querySelector("img").src = "./img/button_active.png";
+          chatButton.style.pointerEvents = "auto";
+          chatButton.style.userSelect = "auto";
+          chatButton.disabled = false;
+        }
+      });
+      const categoryMap = {
+        "결제": "payment",
+        "환불": "refund",
+        "배송": "delivery",
+        "기타": "etc"
+      };
+      document.querySelectorAll("#categories .section").forEach((section) => {
+        section.addEventListener("click", () => {
+          document.querySelectorAll("#categories .section-title").forEach((el) => el.classList.remove("selected"));
+          const sectionTitle = section.querySelector(".section-title");
+          sectionTitle.classList.add("selected");
+          const catText = sectionTitle.textContent.trim();
+          selectedCategory = categoryMap[catText] || "payment";
+        });
+      });
+
+      chatButton.addEventListener("click", async (e) => {
+        e.preventDefault();
+        mainPage.style.display = "none";
+        document.getElementById("main-content").style.width = "100%";
+        chatContainer.style.visibility = "visible";
+        chatContainer.style.opacity = "1";
+        const message = chatText.value.trim();
+        if (!message) return;
+        addMessage("user", message);
+        chatText.value = "";
+        chatButton.querySelector("img").src = "./img/button.png";
+        chatButton.style.pointerEvents = "none";
+        chatButton.style.userSelect = "none";
+        chatButton.disabled = true;
+        chatText.disabled = true;
+        const tempMessageElement = addTemporaryMessage();
+        try {
+          const response = await fetch("/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ category, question }),
+            body: JSON.stringify({ message: message, category: selectedCategory })
           });
-          const data = await res.json();
-          setAnswer(data.answer || "답변을 찾을 수 없습니다.");
-        } catch (err) {
-          setAnswer("오류가 발생했습니다.");
-          console.error(err);
-        } finally {
-          setLoading(false);
+          const data = await response.json();
+          chatContainer.removeChild(tempMessageElement);
+          if (data && data.answer) {
+            addMessage("ai", data.answer);
+            chatText.disabled = false;
+          } else if (data && data.message) {
+            addMessage("ai", data.message);
+            chatText.disabled = false;
+          } else if (data && data.error) {
+            addMessage("ai", data.error);
+            chatText.disabled = false;
+          } else {
+            addMessage("ai", "알 수 없는 오류가 발생했습니다.");
+            chatText.disabled = false;
+          }
+        } catch (error) {
+          chatContainer.removeChild(tempMessageElement);
+          addMessage("ai", "서버 오류가 발생했습니다.");
+          chatText.disabled = false;
         }
-      };
-
-      return (
-        <div>
-          <h1>고객 질문 자동 응답</h1>
-          <form onSubmit={handleSubmit}>
-            <label>카테고리</label>
-            <select value={category} onChange={e => setCategory(e.target.value)}>
-              <option value="payment">결제</option>
-              <option value="refund">환불</option>
-              <option value="delivery">배송</option>
-            </select>
-
-            <label>질문</label>
-            <input
-              type="text"
-              value={question}
-              onChange={e => setQuestion(e.target.value)}
-              placeholder="예: 다른 카드로 결제하고 싶어요"
-              required
-            />
-
-            <button type="submit" disabled={loading}>
-              {loading ? "처리 중..." : "질문하기"}
-            </button>
-          </form>
-
-          {answer && (
-            <div style={{ marginTop: 20, padding: 10, backgroundColor: "#eee" }}>
-              <h2>🔍 답변</h2>
-              <p>{answer}</p>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    ReactDOM.createRoot(document.getElementById("root")).render(<QAInterface />);
-  </script>
-</body>
+      });
+      
+      async function resetChat() {
+        try {
+          await fetch('/reset_chat', { method: 'POST' });
+          chatContainer.innerHTML = '';
+          mainPage.style.display = "block";
+          chatContainer.style.visibility = "hidden";
+          chatContainer.style.opacity = "0";
+        } catch (error) {
+          console.error('채팅 초기화 중 오류 발생:', error);
+        }
+      }
+    </script>
+  </body>
 </html>
