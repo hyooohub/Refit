@@ -5,8 +5,9 @@ import torch
 import os
 from flask_cors import CORS
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder=".", static_url_path="")
 CORS(app)
 
 # 모델 로드
@@ -18,8 +19,8 @@ loaded_data = {}
 
 # 상대경로 기준 디렉토리
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-EMBEDDING_DIR = os.path.join(BASE_DIR, "embeddings")
-DATA_DIR = os.path.join(BASE_DIR, "data")
+EMBEDDING_DIR = os.path.join(BASE_DIR, "..", "models", "embeddings")
+DATA_DIR = os.path.join(BASE_DIR, "..", "models", "datasets")
 
 def load_category_data(category):
     if category in loaded_data:
@@ -42,8 +43,8 @@ def load_category_data(category):
 
     data = {
         "questions": questions,
-        "embeddings": torch.tensor([item["embedding"] for item in embedded_data]),
-        "intent_embeddings": torch.tensor([item["intent_embedding"] for item in embedded_data]),
+        "embeddings": torch.tensor([item["embedding"] for item in embedded_data]).to(device),
+        "intent_embeddings": torch.tensor([item["intent_embedding"] for item in embedded_data]).to(device),
         "answers": [answers_dict.get(q, "") for q in questions],
     }
 
@@ -64,7 +65,7 @@ def ask():
     if not data:
         return jsonify({"error": f"'{category}' 카테고리에 해당하는 데이터를 찾을 수 없습니다."}), 404
 
-    user_embedding = bi_encoder.encode(user_question, convert_to_tensor=True)
+    user_embedding = bi_encoder.encode(user_question, convert_to_tensor=True).to(device)
     user_intent_embedding = user_embedding  # intent 임시 대체
 
     cos_scores_q = util.cos_sim(user_embedding, data["embeddings"])[0]
@@ -90,6 +91,11 @@ def ask():
             })
 
     return jsonify({"message": "답변 가능한 유사 질문이 없습니다."})
+
+
+@app.route("/")
+def index():
+    return app.send_static_file("app.html")
 
 if __name__ == "__main__":
     app.run(debug=True)
